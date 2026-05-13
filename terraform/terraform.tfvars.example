@@ -1,0 +1,41 @@
+# Copy this file to terraform.tfvars and fill in your values.
+# terraform.tfvars is gitignored — never commit secrets.
+
+aws_region   = "us-east-1"
+project_name = "shopnow"
+environment  = "dev"
+
+# Networking
+vpc_cidr             = "10.0.0.0/16"
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.10.0/24", "10.0.20.0/24"]
+availability_zones   = ["us-east-1a", "us-east-1b"]
+
+# ECS task sizing (256 CPU = 0.25 vCPU)
+frontend_cpu    = 256
+frontend_memory = 512
+backend_cpu     = 256
+backend_memory  = 512
+
+frontend_desired_count = 2
+backend_desired_count  = 2
+
+# Leave blank to use the ECR repo URLs produced by this Terraform run.
+# Set to a specific image URI to pin a release.
+frontend_image = ""
+backend_image  = ""
+
+# RDS
+db_instance_class = "db.t3.micro"
+db_name           = "shopnow"
+db_username       = "shopnow"
+db_password       = "CHANGE_ME_use_secrets_manager_in_prod"
+
+# ElastiCache
+redis_node_type = "cache.t3.micro"
+
+# Jenkins CI/CD (set jenkins_enabled = true to provision the EC2 instance)
+jenkins_enabled       = false
+jenkins_instance_type = "t3.medium"
+jenkins_allowed_cidr  = ["YOUR_IP/32"]   # Replace with your IP for security
+jenkins_key_name      = ""               # Set to an existing EC2 key pair name for SSH
