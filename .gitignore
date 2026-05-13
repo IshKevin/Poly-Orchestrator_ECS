@@ -1,0 +1,23 @@
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/terraform.tfvars
+terraform/*.tfplan
+terraform/tfplan
+
+# Node
+app/frontend/node_modules/
+
+# Python
+app/backend/__pycache__/
+app/backend/*.pyc
+app/backend/.env
+
+# Docker
+app/.env
+
+# OS
+.DS_Store
+Thumbs.db
