@@ -1,0 +1,54 @@
+{
+  "family": "shopnow-dev-backend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/shopnow-dev-ecs-task-execution",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/shopnow-dev-ecs-task",
+  "containerDefinitions": [
+    {
+      "name": "backend",
+      "image": "ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/shopnow-dev-backend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 5000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "DB_HOST",     "value": "shopnow-dev-postgres.XXXXXX.us-east-1.rds.amazonaws.com" },
+        { "name": "DB_PORT",     "value": "5432" },
+        { "name": "DB_NAME",     "value": "shopnow" },
+        { "name": "DB_USER",     "value": "shopnow" },
+        { "name": "DB_PASSWORD", "value": "CHANGE_ME" },
+        { "name": "REDIS_HOST",  "value": "shopnow-dev-redis.XXXXXX.0001.use1.cache.amazonaws.com" },
+        { "name": "REDIS_PORT",  "value": "6379" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group":         "/ecs/shopnow-dev/backend",
+          "awslogs-region":        "us-east-1",
+          "awslogs-stream-prefix": "backend"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')\""
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      }
+    }
+  ],
+  "tags": [
+    { "key": "Project",     "value": "shopnow" },
+    { "key": "Environment", "value": "dev" },
+    { "key": "ManagedBy",   "value": "Terraform" }
+  ]
+}
