@@ -22,7 +22,7 @@ Private tasks reach the internet via NAT Gateway.
 Frontend calls backend via Cloud Map: backend.shopnow.local
 ```
 
-**Stack**: Node.js · Python Flask · PostgreSQL · Redis · Docker · Terraform · AWS ECS Fargate · ALB · ECR · Cloud Map
+**Stack**: Node.js · Python Flask · PostgreSQL · Redis · Docker · Terraform · AWS ECS Fargate · ALB · ECR · Cloud Map · Jenkins
 
 ---
 
@@ -43,10 +43,17 @@ Frontend calls backend via Cloud Map: backend.shopnow.local
 │   │   └── requirements.txt
 │   └── docker-compose.yml # Local 4-service stack
 │
+├── Jenkinsfile            # Declarative CI/CD pipeline (test → build → push → deploy)
+│
+├── jenkins/               # Local Jenkins setup
+│   ├── Dockerfile         # Jenkins LTS + Docker CLI + AWS CLI + Python + Node
+│   ├── plugins.txt        # Pre-installed plugin list
+│   └── docker-compose.yml # Run Jenkins locally for pipeline development
+│
 ├── terraform/             # All AWS infrastructure (Terraform ≥ 1.6)
 │   ├── main.tf            # Root module — wires all child modules together
 │   ├── variables.tf       # Root input variables
-│   ├── outputs.tf         # Root outputs (ALB URL, ECR URIs, etc.)
+│   ├── outputs.tf         # Root outputs (ALB URL, ECR URIs, Jenkins URL, etc.)
 │   ├── terraform.tfvars.example
 │   └── modules/
 │       ├── networking/    # VPC, subnets, IGW, NAT GW, route tables
@@ -55,7 +62,8 @@ Frontend calls backend via Cloud Map: backend.shopnow.local
 │       ├── alb/           # ALB, target groups, listener rules
 │       ├── ecs/           # Cluster, IAM, CloudWatch, Cloud Map, task defs, services
 │       ├── rds/           # RDS PostgreSQL 16
-│       └── elasticache/   # ElastiCache Redis 7
+│       ├── elasticache/   # ElastiCache Redis 7
+│       └── jenkins/       # Jenkins EC2 (optional, toggled by jenkins_enabled)
 │
 ├── ecs/
 │   ├── task-definitions/  # Standalone task def JSON (for CLI / reference)
@@ -64,6 +72,7 @@ Frontend calls backend via Cloud Map: backend.shopnow.local
 └── docs/
     ├── architecture.md    # Detailed architecture + networking
     ├── deployment.md      # Step-by-step deployment guide
+    ├── cicd.md            # Jenkins CI/CD pipeline guide
     └── resiliency-test.md # Fault tolerance demo scripts
 ```
 
@@ -139,10 +148,32 @@ terraform output alb_url   # Open this in your browser
 
 ---
 
+## CI/CD with Jenkins
+
+The `Jenkinsfile` at the project root defines a declarative pipeline:
+
+```
+Test (parallel) → Build Images → Push to ECR → Deploy Backend → Deploy Frontend
+```
+
+**Quick start (local):**
+```bash
+cd jenkins
+docker compose up --build -d
+# Open http://localhost:8080
+```
+
+**On AWS** — set `jenkins_enabled = true` in `terraform.tfvars` and run `terraform apply`. Jenkins deploys on EC2 and uses its IAM instance profile for AWS access — no credentials to configure in Jenkins.
+
+See [docs/cicd.md](docs/cicd.md) for the full setup guide.
+
+---
+
 ## Documentation
 
 - [Architecture](docs/architecture.md) — VPC layout, security groups, service discovery
-- [Deployment Guide](docs/deployment.md) — Full step-by-step instructions
+- [Deployment Guide](docs/deployment.md) — Step-by-step deployment instructions
+- [CI/CD Pipeline](docs/cicd.md) — Jenkins pipeline setup and usage
 - [Resiliency Testing](docs/resiliency-test.md) — Fault tolerance demo
 
 ---
@@ -161,8 +192,10 @@ terraform destroy -auto-approve
 | Decision | Rationale |
 |----------|-----------|
 | ECS Fargate | No control-plane fee, no node management, faster time-to-deploy |
-| Private subnets for tasks | Security: tasks are not directly reachable from the internet |
+| Private subnets for tasks | Tasks are not directly reachable from the internet |
 | Cloud Map service discovery | Avoids hardcoded IPs between services |
-| ALB path-based routing | Single entry point, `/api/*` → backend, `/*` → frontend |
-| Deployment circuit breaker | Automatic rollback on failed deployments |
+| ALB path-based routing | Single entry point — `/api/*` → backend, `/*` → frontend |
+| Deployment circuit breaker | Automatic rollback when new tasks fail health checks |
 | Multi-AZ | Two AZs for frontend and backend ensure availability during AZ failures |
+| Jenkins IAM instance profile | No AWS credentials stored in Jenkins — role-based access only |
+| Backend deploys before frontend | Ensures API stability before the UI rolls out |
