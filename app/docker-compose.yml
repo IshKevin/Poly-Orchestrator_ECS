@@ -1,0 +1,101 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: shopnow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: shopnow
+      POSTGRES_USER: shopnow
+      POSTGRES_PASSWORD: shopnow123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shopnow -d shopnow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopnow-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: shopnow-redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopnow-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: shopnow-backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: shopnow
+      DB_USER: shopnow
+      DB_PASSWORD: shopnow123
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      DEBUG: "false"
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - shopnow-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: shopnow-frontend
+    restart: unless-stopped
+    environment:
+      PORT: "3000"
+      BACKEND_URL: http://backend:5000
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/health', r => process.exit(r.statusCode === 200 ? 0 : 1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - shopnow-net
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  shopnow-net:
+    driver: bridge
