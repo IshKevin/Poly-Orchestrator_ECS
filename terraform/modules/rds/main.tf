@@ -12,7 +12,7 @@ resource "aws_db_subnet_group" "this" {
 resource "aws_db_instance" "this" {
   identifier        = "${local.name_prefix}-postgres"
   engine            = "postgres"
-  engine_version    = "16.3"
+  engine_version    = "16"
   instance_class    = var.instance_class
   allocated_storage = 20
   storage_type      = "gp3"
