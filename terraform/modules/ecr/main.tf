@@ -7,6 +7,7 @@ resource "aws_ecr_repository" "this" {
 
   name                 = "${local.name_prefix}-${each.key}"
   image_tag_mutability = "MUTABLE"
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = each.value.scan_on_push
