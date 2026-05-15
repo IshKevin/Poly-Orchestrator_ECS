@@ -31,8 +31,8 @@ pipeline {
                     steps {
                         dir('app/backend') {
                             sh '''
-                                pip install -r requirements.txt -q
-                                python -m pytest tests/ -v --tb=short 2>/dev/null \
+                                pip3 install -r requirements.txt -q
+                                python3 -m pytest tests/ -v --tb=short 2>/dev/null \
                                     || echo "No tests directory found — skipping"
                             '''
                         }
@@ -40,8 +40,10 @@ pipeline {
                 }
                 stage('Frontend') {
                     steps {
-                        dir('app/frontend') {
-                            sh 'npm ci --silent && npm test -- --passWithNoTests 2>/dev/null || echo "No tests found — skipping"'
+                        nodejs('node20') {
+                            dir('app/frontend') {
+                                sh 'npm ci --silent && npm test -- --passWithNoTests 2>/dev/null || echo "No tests found — skipping"'
+                            }
                         }
                     }
                 }
