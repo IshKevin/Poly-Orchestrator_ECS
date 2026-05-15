@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION   = 'us-east-1'
+        AWS_REGION   = 'eu-west-1'
         PROJECT_NAME = 'shopnow'
         ENV_NAME     = 'dev'
         ECS_CLUSTER  = "${PROJECT_NAME}-${ENV_NAME}-cluster"
