@@ -40,10 +40,8 @@ pipeline {
                 }
                 stage('Frontend') {
                     steps {
-                        nodejs('node20') {
-                            dir('app/frontend') {
-                                sh 'npm ci --silent && npm test -- --passWithNoTests 2>/dev/null || echo "No tests found — skipping"'
-                            }
+                        dir('app/frontend') {
+                            sh 'npm ci --silent && npm test -- --passWithNoTests 2>/dev/null || echo "No tests found — skipping"'
                         }
                     }
                 }
