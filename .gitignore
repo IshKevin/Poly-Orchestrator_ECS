@@ -18,6 +18,9 @@ app/backend/.env
 # Docker
 app/.env
 
+# SSH keys
+*.pem
+
 # OS
 .DS_Store
 Thumbs.db
