@@ -152,8 +152,3 @@ variable "jenkins_allowed_cidr" {
   default     = ["0.0.0.0/0"]
 }
 
-variable "jenkins_key_name" {
-  description = "EC2 key pair name for SSH access to Jenkins — leave empty to disable SSH"
-  type        = string
-  default     = ""
-}

@@ -6,13 +6,21 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.50"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.5"
+    }
   }
 
   # Uncomment to store state remotely (recommended for teams)
   # backend "s3" {
   #   bucket         = "shopnow-terraform-state"
-  #   key            = "shopnow/terraform.tfstate"
-  #   region         = "us-east-1"
+  #   key            = "shopnow/dev/terraform.tfstate"
+  #   region         = "eu-west-1"
   #   dynamodb_table = "shopnow-terraform-locks"
   #   encrypt        = true
   # }
@@ -167,7 +175,6 @@ module "jenkins" {
   public_subnet_id = module.networking.public_subnet_ids[0]
   instance_type    = var.jenkins_instance_type
   allowed_cidr     = var.jenkins_allowed_cidr
-  key_name         = var.jenkins_key_name
   ecs_cluster_arn  = module.ecs.cluster_arn
   ecr_repository_arns = [
     module.ecr.repository_arns["frontend"],

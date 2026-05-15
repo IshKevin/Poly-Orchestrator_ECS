@@ -22,3 +22,8 @@ output "iam_role_arn" {
   description = "IAM role ARN attached to the Jenkins instance"
   value       = aws_iam_role.jenkins.arn
 }
+
+output "ssh_key_file" {
+  description = "Local path to the generated SSH private key"
+  value       = local_file.jenkins_private_key.filename
+}

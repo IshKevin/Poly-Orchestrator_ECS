@@ -30,12 +30,6 @@ variable "allowed_cidr" {
   default     = ["0.0.0.0/0"]
 }
 
-variable "key_name" {
-  description = "EC2 key pair name for SSH access — leave empty to disable SSH"
-  type        = string
-  default     = ""
-}
-
 variable "ecr_repository_arns" {
   description = "ARNs of ECR repositories Jenkins is allowed to push to"
   type        = list(string)

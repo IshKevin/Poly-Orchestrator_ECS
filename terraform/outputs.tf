@@ -72,3 +72,8 @@ output "jenkins_url" {
   description = "Jenkins web UI URL (only set when jenkins_enabled = true)"
   value       = var.jenkins_enabled ? module.jenkins[0].jenkins_url : null
 }
+
+output "jenkins_ssh_key_file" {
+  description = "Path to the generated Jenkins SSH private key"
+  value       = var.jenkins_enabled ? module.jenkins[0].ssh_key_file : null
+}
