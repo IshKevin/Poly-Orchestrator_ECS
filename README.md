@@ -6,21 +6,7 @@ A cloud-native e-commerce application demonstrating modern DevOps practices: con
 
 ## Architecture
 
-```
-Internet
-   │
-   ▼
-Application Load Balancer  (public subnets)
-   │  /api/*          │  /*
-   ▼                  ▼
-Backend (Flask)    Frontend (Node.js)    (private subnets)
-   │
-   ├──► RDS PostgreSQL  (private subnet)
-   └──► ElastiCache Redis  (private subnet)
-
-Private tasks reach the internet via NAT Gateway.
-Frontend calls backend via Cloud Map: backend.shopnow.local
-```
+![Architecture Diagram](docs/arch.png)
 
 **Stack**: Node.js · Python Flask · PostgreSQL · Redis · Docker · Terraform · AWS ECS Fargate · ALB · ECR · Cloud Map · Jenkins
 
