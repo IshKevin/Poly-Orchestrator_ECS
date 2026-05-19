@@ -53,9 +53,9 @@ output "redis_endpoint" {
   value       = module.elasticache.address
 }
 
-output "service_discovery_namespace" {
-  description = "Cloud Map private DNS namespace"
-  value       = module.ecs.service_discovery_namespace
+output "service_connect_namespace" {
+  description = "Cloud Map HTTP namespace for Service Connect"
+  value       = module.ecs.service_connect_namespace
 }
 
 output "frontend_service_name" {

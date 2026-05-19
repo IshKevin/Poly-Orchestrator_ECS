@@ -18,9 +18,9 @@ output "backend_service_name" {
   value       = aws_ecs_service.backend.name
 }
 
-output "service_discovery_namespace" {
-  description = "Cloud Map private DNS namespace"
-  value       = aws_service_discovery_private_dns_namespace.this.name
+output "service_connect_namespace" {
+  description = "Cloud Map HTTP namespace for Service Connect"
+  value       = aws_service_discovery_http_namespace.this.name
 }
 
 output "log_group_names" {

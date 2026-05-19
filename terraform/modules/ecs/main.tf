@@ -1,6 +1,6 @@
 locals {
-  name_prefix = "${var.project_name}-${var.environment}"
-  sd_namespace = "${var.project_name}.local"
+  name_prefix  = "${var.project_name}-${var.environment}"
+  sc_namespace = "${var.project_name}.local"
 
   services = {
     frontend = {
@@ -36,6 +36,10 @@ resource "aws_ecs_cluster" "this" {
   setting {
     name  = "containerInsights"
     value = "enabled"
+  }
+
+  service_connect_defaults {
+    namespace = aws_service_discovery_http_namespace.this.arn
   }
 
   tags = merge(var.tags, { Name = "${local.name_prefix}-cluster" })
@@ -109,33 +113,12 @@ resource "aws_cloudwatch_log_group" "this" {
   tags = var.tags
 }
 
-# ── Service Discovery ─────────────────────────────────────────────────────────
+# ── Service Connect ───────────────────────────────────────────────────────────
 
-resource "aws_service_discovery_private_dns_namespace" "this" {
-  name = local.sd_namespace
-  vpc  = var.vpc_id
+resource "aws_service_discovery_http_namespace" "this" {
+  name = local.sc_namespace
 
-  tags = merge(var.tags, { Name = "${local.name_prefix}-sd-namespace" })
-}
-
-resource "aws_service_discovery_service" "this" {
-  for_each = local.services
-
-  name = each.key
-
-  dns_config {
-    namespace_id   = aws_service_discovery_private_dns_namespace.this.id
-    routing_policy = "MULTIVALUE"
-
-    dns_records {
-      ttl  = 10
-      type = "A"
-    }
-  }
-
-  health_check_custom_config {
-    failure_threshold = 1
-  }
+  tags = merge(var.tags, { Name = "${local.name_prefix}-sc-namespace" })
 }
 
 # ── Task Definitions ──────────────────────────────────────────────────────────
@@ -158,7 +141,7 @@ resource "aws_ecs_task_definition" "frontend" {
 
     environment = [
       { name = "PORT",        value = "3000" },
-      { name = "BACKEND_URL", value = "http://backend.${local.sd_namespace}:5000" }
+      { name = "BACKEND_URL", value = "http://backend:5000" }
     ]
 
     logConfiguration = {
@@ -196,7 +179,7 @@ resource "aws_ecs_task_definition" "backend" {
     image     = local.services.backend.image
     essential = true
 
-    portMappings = [{ containerPort = 5000, protocol = "tcp" }]
+    portMappings = [{ name = "backend-port", containerPort = 5000, protocol = "tcp" }]
 
     environment = [
       { name = "DB_HOST",     value = var.db_host },
@@ -250,8 +233,8 @@ resource "aws_ecs_service" "frontend" {
     container_port   = 3000
   }
 
-  service_registries {
-    registry_arn = aws_service_discovery_service.this["frontend"].arn
+  service_connect_configuration {
+    enabled = true
   }
 
   deployment_minimum_healthy_percent = 100
@@ -284,8 +267,18 @@ resource "aws_ecs_service" "backend" {
     container_port   = 5000
   }
 
-  service_registries {
-    registry_arn = aws_service_discovery_service.this["backend"].arn
+  service_connect_configuration {
+    enabled = true
+
+    service {
+      port_name      = "backend-port"
+      discovery_name = "backend"
+
+      client_alias {
+        port     = 5000
+        dns_name = "backend"
+      }
+    }
   }
 
   deployment_minimum_healthy_percent = 100
